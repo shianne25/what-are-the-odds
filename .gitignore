@@ -1,0 +1,15 @@
+# Node / Next.js
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+apps/web/.env.local
+
+# Python / FastAPI
+apps/api/__pycache__/
+apps/api/*.pyc
+apps/api/.venv/
+apps/api/.env
+
+# General
+.DS_Store
+*.log
