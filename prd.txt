@@ -1,0 +1,304 @@
+Product Requirements Document (PRD)
+1. Executive Summary & Vision
+Product Name: What are The Odds
+Vision: Expose the hidden mathematical advantage (vig/margin) and behavioral traps embedded in NBA sports betting interfaces—specifically Same Game Parlays (SGPs) and prop bets—by deconstructing betting slips in real time and projecting long-term expected bankroll decay.
+BASICALLY ANTISPORTSBETTING AND HIGHLIGHTING THE UNETHICAL PRACTICES OF SPORTBETTING SITES/APPS
+Target Audience: Sports fans, software developers/recruiters, gambling awareness advocates, and everyday bettors looking to understand the true mathematical cost of their wagers.
+2. Core Functional Requirements
+2.1 Interactive Bet Slip Builder
+Custom Leg Selection: Users can search and select live or historical NBA prop bets (e.g., "LeBron James Over 24.5 Points (-115)", "Nikola Jokić Over 9.5 Assists (-125)").
+Multi-Leg Stacking: Users can combine 2 to 10 legs into a Same-Game Parlay (SGP).
+Custom Wager Input: Real-time input field for stake amount ($10, $50, $100, or custom).
+Presets & "Dark Pattern" Toggles:
+One-click presets mirroring common sportsbook homepages (e.g., "The 'Boosted' 4-Leg Star Parlay (+1200)").
+Toggle controls to apply simulated "Bonus Bets" or "20% Profit Boosts" to see how house margin remains positive despite promotional illusions.
+2.2 Mathematical Deconstruction Engine
+No-Vig / Fair Odds Calculation:
+Strips out bookmaker juice/overround from American odds to reveal true implied probability:
+$$\text{Implied Probability} = \frac{\vert{}\text{American Odds}\vert{}}{\vert{}\text{American Odds}\vert{} + 100} \quad (\text{if negative})$$
+
+
+ImpliedProbability=100AmericanOdds+100(ifpositive)
+Normalizes probabilities across mutually exclusive outcomes (Pfair=P1P1+P2).
+SGP Correlation Adjuster:
+Accounts for positive/negative dependency in Same Game Parlays (e.g., a player scoring Over 30 Points increases the probability of their team covering the Spread).
+Highlights how sportsbooks shave additional payout percentage on correlated events.
+Expected Value (EV) Breakdown:
+Calculates exact EV per dollar wagered:
+
+
+EV=(OfferedPayoutPtrue_parlay)-Stake
+Displays "Vig Tax" in plain dollars (e.g., "The sportsbook is keeping $18.40 of expected value on this $100 bet").
+2.3 Real-Time Monte Carlo Bankroll Simulator
+Web-Worker Driven Simulation: Runs 1,000 to 10,000 simulated seasons off the main UI thread to maintain 60 FPS performance.
+User-Adjustable Parameters:
+Wager Strategy: Fixed Flat Betting vs. Percentage of Bankroll (Kelly Criterion vs. Fractional Kelly).
+Bet Frequency: Daily, 3x per week, Weekend-only (scaled over 1–5 years / 100–1,000 bets).
+Output Visualization:
+Percentile Bands: 10th, 50th (median), and 90th percentile bankroll trajectory curves.
+Risk of Ruin Index: Percentage of simulated trials where the bankroll hits $0.
+House Edge Cumulative Total: Cumulative dollars lost strictly to vig over time.
+2.4 "Anti-Sportsbook" Dark Pattern UI / Overlay Mode
+Comparative UI Toggle:
+"Sportsbook Mode": Displays green high-contrast potential payout numbers ($1,250.00!), hides small text, emphasizes "Instant Cash Out" cues.
+"Truth Mode": Replaces net payout with True Expected Value (-34.20EV), color-codes house margin in high-contrast warnings, and explicitly lists win probability vs. roulette/lottery odds.
+Educational Tooltips: Interactive popovers explaining concepts like Overround, Synthetic Multipliers, and Gambler's Ruin.
+3. Technical Architecture & Tech Stack
+┌─────────────────────────────────────────────────────────────────┐
+│                    Next.js App Router (React)                   │
+│                                                                 │
+│  ┌───────────────────────┐             ┌─────────────────────┐  │
+│  │   Bet Slip Builder    │             │   Visualizer UI     │  │
+│  │ (TanStack Query Store)│             │ (Recharts / Canvas) │  │
+│  └───────────┬───────────┘             └──────────▲──────────┘  │
+│              │                                    │             │
+│              ▼                                    │             │
+│  ┌────────────────────────────────────────────────┴──────────┐  │
+│  │                     Web Worker Engine                     │  │
+│  │   • Vig Stripping Logic    • Monte Carlo (10,000 runs)    │  │
+│  │   • Implied Probability    • Correlation Adjuster        │  │
+│  └──────────────────────────────▲────────────────────────────┘  │
+└─────────────────────────────────┼───────────────────────────────┘
+                                  │ API Calls / Cached JSON
+┌─────────────────────────────────┴───────────────────────────────┐
+│              FastAPI / Node.js Micro-Backend                    │
+│                                                                 │
+│  ┌────────────────────────┐           ┌──────────────────────┐  │
+│  │ Odds API / NBA Stats   │           │ PostgreSQL / Redis   │  │
+│  │ Ingestion & Caching    │           │ (Cached Game Odds)   │  │
+│  └────────────────────────┘           └──────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+
+Frontend: Next.js (App Router), TypeScript, Tailwind CSS, TanStack Query, Framer Motion (for UI transitions).
+Data Visualization: Recharts, Tremor, or Chart.js (with Web Workers for off-thread calculation).
+Backend: FastAPI (Python) or Node.js (TypeScript) handling caching and data fetching from The Odds API or local fallback mock JSON feeds.
+Database / Cache (Optional): Redis or Vercel KV for caching NBA prop odds to minimize API hit limits.
+4. 6-Week Implementation Plan
+Week 1: Project Setup & Deconstruction Math Core
+Goals: Establish repository structure, build core probability/vig-stripping utility functions, and set up test suites.
+Tasks:
+Initialize Next.js project with TypeScript and Tailwind CSS.
+Write pure mathematical helper functions for American odds to decimal conversion, vig stripping, and compound parlay probability.
+Set up Jest or Vitest to unit test odds conversions and EV calculations against known benchmark bookmaker lines.
+Week 2: API Integration & Data Caching Layer
+Goals: Fetch live/cached NBA prop lines and game odds.
+Tasks:
+Integrate The Odds API (free tier) to fetch NBA moneylines, spreads, totals, and player props.
+Create a mock JSON fallback generator for off-season testing or API quota preservation.
+Build backend endpoint/route handler with a 5-minute cache header.
+Week 3: Interactive Bet Slip & "Truth Mode" UI
+Goals: Build a stateful, drag-and-drop or click-to-add Bet Slip component.
+Tasks:
+Construct a two-column responsive layout: Game Selector on the left, Stateful Bet Slip on the right.
+Implement real-time EV recalculation as legs are added or removed.
+Build the "Sportsbook Mode vs. Truth Mode" toggle switch with CSS theme transformations.
+Week 4: Web Worker & Monte Carlo Simulation Engine
+Goals: Offload heavy simulation calculations to a Web Worker thread for instantaneous feedback.
+Tasks:
+Implement the Monte Carlo algorithm in TypeScript/JavaScript within a Web Worker.
+Simulate 10,000 sports-bettor lifespans given user input parameters (stake size, wager frequency, win rate variance).
+Benchmark execution speed (aim for < 100ms total compute time for 10,000 runs).
+Week 5: Data Visualization & Educational Overlays
+Goals: Render responsive, beautiful charts and interactive educational overlays.
+Tasks:
+Connect Monte Carlo output streams to Recharts/Tremor line charts showing percentile ruin curves.
+Add interactive tooltips deconstructing dark patterns (e.g., hover over "Profit Boost" to reveal the mathematical illusion).
+Build an "Export Report Card" button allowing users to download or share a summary graphic of their slip's true odds.
+Week 6: Polish, Deployment & Portfolio Write-Up
+Goals: Refine UI polish, write documentation, and deploy publicly.
+Tasks:
+Add micro-interactions (Framer Motion page transitions, button hover states, sound FX toggles).
+Deploy frontend on Vercel and backend on Render/Fly.io.
+Write a comprehensive README.md and a technical blog post detailing the architecture, math, and ethical insights.
+5. Portfolio Key Takeaways & Storytelling
+When presenting this project on your resume, portfolio website, or in software engineering interviews, highlight these engineering challenges:
+Client-Side Performance: Executing 10,000 Monte Carlo iterations in browser using Web Workers without causing UI thread jank or frame drops.
+Data Pipeline Optimization: Caching and transforming multi-leg odds data from third-party APIs with fallback resilience.
+UX & Product Design: Translating complex financial probability and behavioral dark patterns into clear, interactive visual storytelling.
+
+
+Here is the complete architectural rundown of "WHAT ARE THE ODDS?".
+Because this is a static, client-side application, the architecture is clean, fast, and completely free of server overhead or database costs. Everything lives in the browser.
+1. High-Level System Diagram
+               ┌────────────────────────────────────────────────────────┐
+               │                     User Browser                       │
+               │                                                        │
+               │   ┌────────────────────────────────────────────────┐   │
+               │   │                Global State                    │   │
+               │   │  - isRealityMode (Boolean)                     │   │
+               │   │  - activeScenarioId (String)                   │   │
+               │   │  - selectedLegs (Array of IDs)                 │   │
+               │   │  - wagerAmount (Number: default $25)           │   │
+               │   └───────────────────────┬────────────────────────┘   │
+               │                           │                            │
+               │         ┌─────────────────┴─────────────────┐          │
+               │         ▼                                   ▼          │
+               │  ┌──────────────┐                   ┌───────────────┐  │
+               │  │ Static Data  │                   │  Math Engine  │  │
+               │  │  (JSON file) │                   │  (Pure JS/TS) │  │
+               │  └──────┬───────┘                   └───────┬───────┘  │
+               │         │                                   │          │
+               │         └─────────────────┬─────────────────┘          │
+               │                           │                            │
+               │                           ▼                            │
+               │   ┌────────────────────────────────────────────────┐   │
+               │   │                 UI Components                  │   │
+               │   │                                                │   │
+               │   │  [Header / Toggle]                             │   │
+               │   │         │                                      │   │
+               │   │         ▼                                      │   │
+               │   │  [Matchup Selector]                            │   │
+               │   │         │                                      │   │
+               │   │         ├─── Promoted View (Casino / DK Style) │   │
+               │   │         └─── Reality View  (Diagnostic Audit)  │   │
+               │   │         │                                      │   │
+               │   │  [Interactive Parlay Slip]                     │   │
+               │   │  [Fast-Forward Simulation Graph]               │   │
+               │   └────────────────────────────────────────────────┘   │
+               └────────────────────────────────────────────────────────┘
+
+               2. The Core Building Blocks
+The project breaks down into 4 clear layers:
+Layer 1: The Data Store (data/scenarios.json)
+This is the single source of truth for all games, player props, and educational critique notes. It requires zero API fetching.
+Each scenario contains:
+Matchup metadata: Team names, logos/colors, date, broadcast channel.
+Available props (Legs): Player names, stat category (Points, Rebounds, Threes), line value, and American odds (-110, +125, etc.).
+Promoted hooks: Fake promo badges ("Boosted from +650 to +850", "LeBron Special").
+Audit facts: True calculated probability, actual house hold, and an educational footnote explaining why the book pushes this specific bet.
+Layer 2: The Math & Probability Engine (utils/betMath.js)
+A small, pure-JavaScript utility file containing deterministic math formulas. When a user selects or deselects legs or changes their wager, this engine runs in real-time:
+American Odds \to Decimal Odds:\text{Decimal} = \begin{cases} 1 + \left(\frac{|\text{Odds}|}{100}\right) & \text{if } \text{Odds} > 0 \\ 1 + \left(\frac{100}{|\text{Odds}|}\right) & \text{if } \text{Odds} < 0 \end{cases}
+Combined Book Odds (The Promoted Payout): Multiplies decimal odds of all checked legs together to show the enticing payout number.
+True Compounded Probability (The Reality): Assumes fair 50/50 probability (0.50) or baseline market probability per leg, compounding them:P_{\text{true}} = P_1 \times P_2 \times P_3 \times \dots \times P_n
+House Hold Margin (% Vig):\text{Hold} = \frac{P_{\text{implied}} - P_{\text{true}}}{P_{\text{implied}}} \times 100
+Expected Value (EV):EV = (P_{\text{true}} \times \text{Potential Profit}) - ((1 - P_{\text{true}}) \times \text{Wager})
+Layer 3: Application State (State Management)
+You only need 4 reactive variables across the whole app:
+State Variable	Type	Description
+isRealityMode	boolean	The master switch. Controls whether components render the sportsbook marketing UI or the diagnostic critique UI.
+selectedScenarioId	string	Which NBA game is loaded (e.g., "lakers-warriors" or "celtics-knicks").
+activeLegs	array	Which player props are currently checked in the parlay slip.
+wagerAmount	number	User input wager (e.g., $25).
+Layer 4: The UI Component Tree
+
+App
+ ├── Navbar
+ │    ├── Logo ("WHAT ARE THE ODDS?")
+ │    └── MasterToggleSwitch (Promoted vs. Reality)
+ │
+ ├── ScenarioPicker (Dropdown / Tabs: Lakers vs Warriors | Celtics vs Knicks)
+ │
+ ├── MainContentGrid (Two-Column Layout)
+ │    │
+ │    ├── LeftColumn: BetBuilderCard
+ │    │    ├── MatchupHeader (Teams, Tip-off time, Fake TV broadcast banner)
+ │    │    └── PropSelectionList
+ │    │         └── PropItem (Dynamic styling based on isRealityMode)
+ │    │              ├── Promoted: Neon checkbox, "+850 Boost" badge, player photo
+ │    │              └── Reality: Red border, "Implied Prob: 52.4% vs True: 48.0%", "Correlation Warning"
+ │    │
+ │    └── RightColumn: BetSlip
+ │         ├── WagerInputBox (Input: $25)
+ │         ├── ConditionalSummaryView
+ │         │    ├── [IF PromotedMode]:
+ │         │    │    ├── Payout Display ("Risk $25 to win $212.50!")
+ │         │    │    ├── Confetti / Shiny "Place Bet" button
+ │         │    │    └── "Risk-Free Token Applied" badge
+ │         │    │
+ │         │    └── [IF RealityMode]:
+ │         │         ├── True Chance of Winning ("1 in 21 games")
+ │         │         ├── House Hold Tag ("Book keeps 28.4% long-term")
+ │         │         ├── Expected Value readout ("-$7.10 average loss")
+ │         │         └── The "Fine Print" audit box (Explaining stake withholding)
+ │         │
+ │         └── FastForwardSimulator (Accordion / Modal)
+ │              └── Monte Carlo bankroll chart (Visualizes 100 bets at this edge)
+ │
+ └── Footer (Citations, AGA statistics, Problem Gambling hotline)
+ 3. How the "Flip" Actually Works in Code
+The core experience relies on a single conditional switch in your UI components.
+For example, your BetSummary component simply inspects isRealityMode:
+export default function BetSlipSummary({ isRealityMode, wager, mathResults }) {
+  if (!isRealityMode) {
+    // PROMOTED VIEW (FanDuel/DraftKings Style)
+    return (
+      <div className="bg-slate-900 border border-green-500 rounded-xl p-6 text-white shadow-lg shadow-green-500/10">
+        <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">
+          ⚡ 25% PARLAY BOOST APPLIED
+        </span>
+        <div className="mt-4">
+          <p className="text-gray-400 text-sm">Potential Payout</p>
+          <p className="text-3xl font-extrabold text-green-400">${mathResults.potentialPayout}</p>
+        </div>
+        <button className="w-full mt-4 bg-green-500 hover:bg-green-400 text-black font-black py-3 rounded-lg uppercase tracking-wide">
+          Place Bet Now
+        </button>
+      </div>
+    );
+  }
+  // REALITY VIEW (Diagnostic Audit)
+  return (
+    <div className="bg-zinc-950 border border-red-600/80 rounded-xl p-6 text-zinc-100 font-mono">
+      <div className="flex items-center justify-between text-red-500 text-xs font-bold border-b border-zinc-800 pb-2">
+        <span>⚠️ AUDIT: ALGORITHMIC ADVANTAGE</span>
+        <span>HOUSE HOLD: {mathResults.houseHold}%</span>
+      </div>
+      <div className="mt-4 space-y-2 text-sm">
+        <p>True Probability: <span className="text-red-400 font-bold">{mathResults.trueProbability}%</span></p>
+        <p>Book Implied Probability: <span className="text-zinc-400">{mathResults.impliedProbability}%</span></p>
+        <p>Expected Value per $25: <span className="text-red-400 font-bold">-${mathResults.expectedLoss}</span></p>
+      </div>
+      <div className="mt-4 p-3 bg-red-950/30 border border-red-900/50 rounded text-xs text-red-300">
+        Notice: Multi-leg parlays compound the book's margin from ~4.5% up to ~{mathResults.houseHold}%. Over 100 bets, this guarantees total loss of capital.
+      </div>
+    </div>
+  );
+}
+
+You should use fully pre-existing, curated data.
+In fact, using pre-existing data isn't just a workaround to save money—it will make your project significantly better, more reliable, and more educational than using live data.
+Here is why, plus how you can structure it so it looks and feels completely authentic to anyone visiting your site:
+Why Pre-Existing Data is Better Than Live Data
+1. Live Data Destroys the Educational Lesson
+If you pull live data from an API on a random Tuesday, you might get a boring matchup where the odds don't clearly demonstrate the trap.
+With curated scenarios, you can intentionally craft 2 or 3 realistic game setups that showcase the exact unethical mechanics you want to critique (e.g., one scenario showing the "blowout/bench" trap, another showing the compounding vig of 5 legs, and another showing how odds boosts are deceptive).
+2. Portfolio Permanence (It Never Breaks)
+If someone checks out your project 6 months from now—or an employer looks at it on a Sunday morning in July when there are no NBA games being played—a live API will show: "No games available" or crash with an API Error 429: Rate Limit Exceeded.
+Curated data stored inside your project works 24/7/365 forever with zero maintenance.
+3. Realism Without the Headaches
+To the person using your site, they won't know the difference. If they see Celtics vs. Knicks, complete with real player names (Tatum, Brunson), realistic point totals (24.5, 27.5), and real American odds (-115, +120), it will look 100% genuine.
+How to Structure Your Pre-Existing Data
+Instead of just one static bet, you can include a simple dropdown called "Choose Game Scenario" with 2 or 3 curated NBA game nights:
+Scenario A: "The Superstar Trap" (Lakers vs. Warriors)
+The Promoted Hook: Pre-boosted parlay featuring LeBron James, Stephen Curry, and Anthony Davis.
+The Reality Highlight: Compounded house edge. Shows that stacking 4 public favorite "Overs" results in a 31.2% house hold margin.
+Scenario B: "The Garbage-Time Blowout" (Celtics vs. Hornets)
+The Promoted Hook: High-scoring prop on Jayson Tatum and Jaylen Brown.
+The Reality Highlight: The Correlation Trap. Celtics lead by 35 in the 3rd quarter; coach pulls the starters for the 4th quarter. Even though Tatum was dominating, he falls 2 points short because of game context the sportsbook algorithms anticipated but the casual bettor didn't.
+Scenario C: "The 'No-Sweat' First Bet Trap" (Nuggets vs. Bucks)
+The Promoted Hook: "Deposit 50, Get 200 in Bonus Bets."
+The Reality Highlight: Stake withholding and rollover rules. A dynamic balance card that proves a user's promotional credits expire before mathematically breaking even.
+What Does the Data Actually Look Like in Code?
+You just create a simple file called scenarios.json or data.js in your project folder. No database, no backend:
+export const scenarios = [
+  {
+    id: "lakers-warriors",
+    matchup: "Los Angeles Lakers @ Golden State Warriors",
+    promotedOdds: "+850",
+    boostedFrom: "+650",
+    legs: [
+      { player: "LeBron James", prop: "Over 24.5 Points", odds: -115, trueProb: 0.49 },
+      { player: "Stephen Curry", prop: "4+ Made 3-Pointers", odds: -125, trueProb: 0.51 },
+      { player: "Anthony Davis", prop: "12+ Rebounds", odds: -110, trueProb: 0.48 },
+      { player: "Warriors", prop: "Moneyline Win", odds: -120, trueProb: 0.52 }
+    ],
+    realityAudit: {
+      trueWinChance: "6.2%",
+      bookImpliedChance: "10.5%",
+      houseEdge: "29.4%",
+      expectedLossPer25: "-$7.35",
+      critiqueNote: "Player 'Overs' are heavily correlated with pace; books discount payout relative to true risk."
+    }
+  }
+];
