@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routers.scenarios import router
+
 app = FastAPI(
     title="What Are The Odds API",
     description="Odds ingestion, caching, and parlay math microservice",
@@ -15,6 +17,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register API routes
+app.include_router(router)
+
 
 @app.get("/health")
 def health_check():
